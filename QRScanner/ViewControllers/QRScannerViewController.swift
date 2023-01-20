@@ -14,6 +14,7 @@ import CoreImage
 class QRScannerViewController: UIViewController {
     
     private var captureSession: AVCaptureSession?
+    private var cameraPreviewLayer: AVCaptureVideoPreviewLayer?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,8 +30,20 @@ class QRScannerViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-
+        
         stopSession()
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        
+        coordinator.animate(alongsideTransition: nil, completion: { [weak self] (context) in
+            guard let self else {return}
+            
+            DispatchQueue.main.async(execute: {
+                self.updateVideoOrientation()
+            })
+        })
     }
 }
 
@@ -71,7 +84,7 @@ extension QRScannerViewController {
         if captureSession == nil {
             captureSession = AVCaptureSession()
         }
-
+        
         let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
         
         guard let device = videoDevice,
@@ -88,7 +101,7 @@ extension QRScannerViewController {
         
         let metadataOutput = AVCaptureMetadataOutput()
         captureSession.addOutput(metadataOutput)
-
+        
         metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
         metadataOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.qr]
         
@@ -105,16 +118,31 @@ extension QRScannerViewController {
             return
         }
         
-        let cameraPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        cameraPreviewLayer.videoGravity = .resizeAspectFill
-        cameraPreviewLayer.connection?.videoOrientation = .portrait
-        cameraPreviewLayer.frame = self.view.frame
-        self.view.layer.insertSublayer(cameraPreviewLayer, at: 0)
-              
+        cameraPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        cameraPreviewLayer?.videoGravity = .resizeAspectFill
+        cameraPreviewLayer?.connection?.videoOrientation = .portrait
+        cameraPreviewLayer?.frame = self.view.frame
+        self.view.layer.insertSublayer(cameraPreviewLayer!, at: 0)
+        
         DispatchQueue.main.async {
             //Adds the camera guide view
             self.addGuideView()
         }
+    }
+    
+    private func updateVideoOrientation() {
+        guard let cameraPreviewLayer else { return }
+        
+        guard cameraPreviewLayer.connection!.isVideoOrientationSupported else {
+            self.showAlertPopup(title: "Error", message: "Couldn't rotate the camera at this moment")
+            return
+        }
+        
+        let statusBarOrientation = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation
+        let videoOrientation: AVCaptureVideoOrientation = statusBarOrientation?.videoOrientation ?? .portrait
+        cameraPreviewLayer.frame = view.layer.bounds
+        cameraPreviewLayer.connection?.videoOrientation = videoOrientation
+        cameraPreviewLayer.removeAllAnimations()
     }
     
     private func addGuideView() {
@@ -122,7 +150,7 @@ extension QRScannerViewController {
         let height = width
         let viewX = (UIScreen.main.bounds.width / 2) - (width / 2)
         let viewY = (UIScreen.main.bounds.height / 2) - (height / 2)
-                
+        
         let viewGuide = PartialTransparentView(rectsArray: [CGRect(x: viewX, y: viewY, width: width, height: height)])
         view.addSubview(viewGuide)
         
@@ -160,7 +188,7 @@ extension QRScannerViewController {
         if qrText.isValidURL() {
             alert.addAction(UIAlertAction(title: "Open URL", style: .default) {[weak self] _ in
                 guard let self,
-                let url = URL(string: qrText) else {return}
+                      let url = URL(string: qrText) else {return}
                 
                 let safariVC = SFSafariViewController(url: url)
                 alert.dismiss(animated: true) {
@@ -168,7 +196,7 @@ extension QRScannerViewController {
                 }
             })
         }
-
+        
         alert.addAction(UIAlertAction(title: "Close", style: .cancel) {[weak self] _ in
             guard let self else {return}
             
@@ -176,7 +204,7 @@ extension QRScannerViewController {
                 self.captureSession?.startRunning()
             }
         })
-                        
+        
         self.present(alert, animated: true)
     }
     
@@ -196,7 +224,7 @@ extension QRScannerViewController {
         if captureSession?.isRunning == false {
             DispatchQueue.global().async {[weak self] in
                 guard let self else {return}
-
+                
                 self.captureSession?.startRunning()
             }
         }

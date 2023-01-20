@@ -16,6 +16,7 @@
 		78482C0329570A3C0056CEA4 /* UIViewController+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78482C0229570A3C0056CEA4 /* UIViewController+Extensions.swift */; };
 		78E6FA6629730B7E00628BA7 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78E6FA6529730B7E00628BA7 /* String+Extensions.swift */; };
 		78E6FA69297312D100628BA7 /* PartialTransparentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78E6FA68297312D100628BA7 /* PartialTransparentView.swift */; };
+		78F2CA65297AEC5600B29B14 /* UIInterfaceOrientation+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F2CA64297AEC5600B29B14 /* UIInterfaceOrientation+Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		78482C0229570A3C0056CEA4 /* UIViewController+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Extensions.swift"; sourceTree = "<group>"; };
 		78E6FA6529730B7E00628BA7 /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		78E6FA68297312D100628BA7 /* PartialTransparentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartialTransparentView.swift; sourceTree = "<group>"; };
+		78F2CA64297AEC5600B29B14 /* UIInterfaceOrientation+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIInterfaceOrientation+Extensions.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +81,7 @@
 			children = (
 				78482C0229570A3C0056CEA4 /* UIViewController+Extensions.swift */,
 				78E6FA6529730B7E00628BA7 /* String+Extensions.swift */,
+				78F2CA64297AEC5600B29B14 /* UIInterfaceOrientation+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -181,6 +184,7 @@
 			files = (
 				78482C0329570A3C0056CEA4 /* UIViewController+Extensions.swift in Sources */,
 				78482BEC295709050056CEA4 /* AppDelegate.swift in Sources */,
+				78F2CA65297AEC5600B29B14 /* UIInterfaceOrientation+Extensions.swift in Sources */,
 				78482BEE295709050056CEA4 /* SceneDelegate.swift in Sources */,
 				78E6FA69297312D100628BA7 /* PartialTransparentView.swift in Sources */,
 				78E6FA6629730B7E00628BA7 /* String+Extensions.swift in Sources */,
