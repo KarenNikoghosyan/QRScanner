@@ -19,27 +19,18 @@ class QRScannerViewController: UIViewController {
         super.viewDidLoad()
         
         checkPermissions()
-        setupCameraLiveView()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        if captureSession?.isRunning == false {
-            DispatchQueue.global(qos: .background).async {[weak self] in
-                guard let self else {return}
-                
-                self.captureSession?.startRunning()
-            }
-        }
+        startSession()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
-        if captureSession?.isRunning == true {
-            captureSession?.stopRunning()
-        }
+
+        stopSession()
     }
 }
 
@@ -53,10 +44,15 @@ extension QRScannerViewController {
                 
                 if !granted {
                     self.showPermissionsAlert()
+                } else {
+                    self.setupCameraLiveView()
                 }
             }
         case .denied, .restricted:
-            showPermissionsAlert()
+            self.showPermissionsAlert()
+            
+        case .authorized:
+            setupCameraLiveView()
             
         default:
             return
@@ -64,7 +60,11 @@ extension QRScannerViewController {
     }
     
     private func showPermissionsAlert() {
-        showAlertPopup(title: "Permission Required", message: "Please open Settings and grant permission for this app to use your camera.")
+        DispatchQueue.main.async {[weak self] in
+            guard let self else {return}
+            
+            self.showAlertPopup(title: "Permission Required", message: "Please open Settings and grant permission for this app to use your camera.")
+        }
     }
     
     private func setupCameraLiveView() {
@@ -92,22 +92,28 @@ extension QRScannerViewController {
         metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
         metadataOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.qr]
         
+        //Configures the camera preview layer
         configurePreviewLayer(captureSession: captureSession)
         
-        DispatchQueue.global(qos: .background).async {[weak self] in
-            guard let self else {return}
-            
-            self.captureSession?.startRunning()
-        }
+        //Starts the camera session
+        startSession()
     }
     
     private func configurePreviewLayer(captureSession: AVCaptureSession) {
         let cameraPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         cameraPreviewLayer.videoGravity = .resizeAspectFill
         cameraPreviewLayer.connection?.videoOrientation = .portrait
-        cameraPreviewLayer.frame = view.frame
-        view.layer.insertSublayer(cameraPreviewLayer, at: 0)
-        addGuideView()
+        DispatchQueue.main.async {[weak self] in
+            guard let self else {return}
+            
+            cameraPreviewLayer.frame = self.view.frame
+            self.view.layer.insertSublayer(cameraPreviewLayer, at: 0)
+        }
+              
+        DispatchQueue.main.async {
+            //Adds the camera guide view
+            self.addGuideView()
+        }
     }
     
     private func addGuideView() {
@@ -142,17 +148,18 @@ extension QRScannerViewController {
         view.bringSubviewToFront(label)
     }
     
-    private func showQRMessage(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    private func showQRMessage(title: String, qrText: String) {
+        let alert = UIAlertController(title: title, message: qrText, preferredStyle: .alert)
         
         let imageView = UIImageView(frame: CGRect(x: 10, y: 10, width: 30, height: 30))
-        imageView.image = generateQRCode(from: message)
+        //Generates an QR code image by using a string
+        imageView.image = generateQRCode(from: qrText)
         alert.view.addSubview(imageView)
         
-        if message.isValidURL() {
+        if qrText.isValidURL() {
             alert.addAction(UIAlertAction(title: "Open URL", style: .default) {[weak self] _ in
                 guard let self,
-                let url = URL(string: message) else {return}
+                let url = URL(string: qrText) else {return}
                 
                 let safariVC = SFSafariViewController(url: url)
                 alert.dismiss(animated: true) {
@@ -183,6 +190,26 @@ extension QRScannerViewController {
         }
         return nil
     }
+    
+    private func startSession() {
+        if captureSession?.isRunning == false {
+            DispatchQueue.global().async {[weak self] in
+                guard let self else {return}
+
+                self.captureSession?.startRunning()
+            }
+        }
+    }
+    
+    private func stopSession() {
+        if captureSession?.isRunning == true {
+            DispatchQueue.global().async {[weak self] in
+                guard let self else {return}
+                
+                self.captureSession?.stopRunning()
+            }
+        }
+    }
 }
 
 //MARK: - Delegates
@@ -198,7 +225,7 @@ extension QRScannerViewController: AVCaptureMetadataOutputObjectsDelegate {
         
         if metadataObject.type == AVMetadataObject.ObjectType.qr {
             let urlMessage = metadataObject.stringValue ?? ""
-            showQRMessage(title: "Message", message: urlMessage)
+            showQRMessage(title: "Message", qrText: urlMessage)
         }
     }
 }
