@@ -130,14 +130,15 @@ extension QRScannerViewController {
         cameraPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         cameraPreviewLayer?.videoGravity = .resizeAspectFill
         cameraPreviewLayer?.connection?.videoOrientation = .portrait
-        cameraPreviewLayer?.frame = self.view.frame
-        self.view.layer.insertSublayer(cameraPreviewLayer!, at: 0)
         
         DispatchQueue.main.async {[weak self] in
             guard let self else {return}
             
+            self.cameraPreviewLayer?.frame = self.view.frame
+            self.view.layer.insertSublayer(self.cameraPreviewLayer!, at: 0)
+            
             //Adds the camera guide view
-            UIDevice.current.orientation == .portrait ? self.setupGuideViewPotrait() : self.setupGuideViewLandscape()
+            UIDevice.current.orientation == .portrait ? self.setupGuideViewPotrait() : UIDevice.current.orientation == .landscapeLeft ? self.setupGuideViewLandscape() : UIDevice.current.orientation == .landscapeRight ? self.setupGuideViewLandscape() : self.setupGuideViewPotrait()
         }
     }
 
@@ -184,7 +185,7 @@ extension QRScannerViewController {
         
         label.translatesAutoresizingMaskIntoConstraints = false
         
-        labelYCenterConstraintConstant = UIDevice.current.orientation == .portrait ? -200 : -150
+        labelYCenterConstraintConstant = UIDevice.current.orientation == .portrait ? -200 : UIDevice.current.orientation == .landscapeLeft ? -150 : UIDevice.current.orientation == .landscapeRight ? -150 : -200
         NSLayoutConstraint.activate([
             label.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: labelYCenterConstraintConstant),
             label.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 0)
@@ -218,7 +219,7 @@ extension QRScannerViewController {
         label.removeFromSuperview()
         
         //Updates the camera guide view
-        UIDevice.current.orientation == .portrait ? self.setupGuideViewPotrait() : self.setupGuideViewLandscape()
+        UIDevice.current.orientation == .portrait ? setupGuideViewPotrait() : UIDevice.current.orientation == .landscapeLeft ? setupGuideViewLandscape() : UIDevice.current.orientation == .landscapeRight ? setupGuideViewLandscape() : setupGuideViewPotrait()
     }
     
     private func showQRMessage(title: String, qrText: String) {
