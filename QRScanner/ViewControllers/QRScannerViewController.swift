@@ -16,6 +16,15 @@ class QRScannerViewController: UIViewController {
     private var captureSession: AVCaptureSession?
     private var cameraPreviewLayer: AVCaptureVideoPreviewLayer?
     
+    private var viewGuide: PartialTransparentView = PartialTransparentView(frame: .zero)
+    private var label: UILabel = UILabel(frame: .zero)
+    
+    private var height: CGFloat = 0
+    private var width: CGFloat = 0
+    private var viewX: CGFloat = 0
+    private var viewY: CGFloat = 0
+    private var labelYCenterConstraintConstant: CGFloat = 0
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -124,34 +133,36 @@ extension QRScannerViewController {
         cameraPreviewLayer?.frame = self.view.frame
         self.view.layer.insertSublayer(cameraPreviewLayer!, at: 0)
         
-        DispatchQueue.main.async {
+        DispatchQueue.main.async {[weak self] in
+            guard let self else {return}
+            
             //Adds the camera guide view
-            self.addGuideView()
+            UIDevice.current.orientation == .portrait ? self.setupGuideViewPotrait() : self.setupGuideViewLandscape()
         }
     }
-    
-    private func updateVideoOrientation() {
-        guard let cameraPreviewLayer else { return }
+
+    private func setupGuideViewPotrait() {
+        width = UIScreen.main.bounds.width - (UIScreen.main.bounds.width * 0.2)
+        height = width
+        viewX = (UIScreen.main.bounds.width / 2) - (width / 2)
+        viewY = (UIScreen.main.bounds.height / 2) - (height / 2)
         
-        guard cameraPreviewLayer.connection!.isVideoOrientationSupported else {
-            self.showAlertPopup(title: "Error", message: "Couldn't rotate the camera at this moment")
-            return
-        }
-        
-        let statusBarOrientation = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation
-        let videoOrientation: AVCaptureVideoOrientation = statusBarOrientation?.videoOrientation ?? .portrait
-        cameraPreviewLayer.frame = view.layer.bounds
-        cameraPreviewLayer.connection?.videoOrientation = videoOrientation
-        cameraPreviewLayer.removeAllAnimations()
+        setupPartialTransparentView()
+        setupUILabelGuide()
     }
     
-    private func addGuideView() {
-        let width = UIScreen.main.bounds.width - (UIScreen.main.bounds.width * 0.2)
-        let height = width
-        let viewX = (UIScreen.main.bounds.width / 2) - (width / 2)
-        let viewY = (UIScreen.main.bounds.height / 2) - (height / 2)
+    private func setupGuideViewLandscape() {
+        width = UIScreen.main.bounds.width - (UIScreen.main.bounds.width * 0.6)
+        height = UIScreen.main.bounds.height - (UIScreen.main.bounds.height * 0.4)
+        viewX = (UIScreen.main.bounds.width / 2) - (width / 2)
+        viewY = (UIScreen.main.bounds.height / 2) - (height / 2)
         
-        let viewGuide = PartialTransparentView(rectsArray: [CGRect(x: viewX, y: viewY, width: width, height: height)])
+        setupPartialTransparentView()
+        setupUILabelGuide()
+    }
+    
+    private func setupPartialTransparentView() {
+        viewGuide = PartialTransparentView(rectsArray: [CGRect(x: viewX, y: viewY, width: width, height: height)])
         view.addSubview(viewGuide)
         
         viewGuide.translatesAutoresizingMaskIntoConstraints = false
@@ -162,19 +173,52 @@ extension QRScannerViewController {
             viewGuide.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0)
         ])
         view.bringSubviewToFront(viewGuide)
-        
-        let label = UILabel()
+    }
+    
+    private func setupUILabelGuide() {
+        label = UILabel()
         label.text = "Align the camera to scan the QR code"
         label.textColor = .white
         label.font = UIFont(name: "Futura", size: 14)
         view.addSubview(label)
         
         label.translatesAutoresizingMaskIntoConstraints = false
+        
+        labelYCenterConstraintConstant = UIDevice.current.orientation == .portrait ? -200 : -150
         NSLayoutConstraint.activate([
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -200),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: labelYCenterConstraintConstant),
             label.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 0)
         ])
         view.bringSubviewToFront(label)
+    }
+      
+    private func updateVideoOrientation() {
+        guard let cameraPreviewLayer else { return }
+        
+        guard cameraPreviewLayer.connection!.isVideoOrientationSupported else {
+            self.showAlertPopup(title: "Error", message: "Couldn't rotate the camera at this moment")
+            return
+        }
+        
+        let windowScenes = UIApplication.shared.connectedScenes.first as? UIWindowScene
+        let window = windowScenes?.windows.first
+        
+        let statusBarOrientation = window?.windowScene?.interfaceOrientation
+        let videoOrientation: AVCaptureVideoOrientation = statusBarOrientation?.videoOrientation ?? .portrait
+        
+        cameraPreviewLayer.frame = view.layer.bounds
+        cameraPreviewLayer.connection?.videoOrientation = videoOrientation
+        cameraPreviewLayer.removeAllAnimations()
+        
+        updateTransparentViewSize()
+    }
+    
+    private func updateTransparentViewSize() {
+        viewGuide.removeFromSuperview()
+        label.removeFromSuperview()
+        
+        //Updates the camera guide view
+        UIDevice.current.orientation == .portrait ? self.setupGuideViewPotrait() : self.setupGuideViewLandscape()
     }
     
     private func showQRMessage(title: String, qrText: String) {
