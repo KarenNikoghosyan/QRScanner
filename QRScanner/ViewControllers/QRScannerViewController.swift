@@ -93,22 +93,23 @@ extension QRScannerViewController {
         metadataOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.qr]
         
         //Configures the camera preview layer
-        configurePreviewLayer(captureSession: captureSession)
+        configurePreviewLayer()
         
         //Starts the camera session
         startSession()
     }
     
-    private func configurePreviewLayer(captureSession: AVCaptureSession) {
+    private func configurePreviewLayer() {
+        guard let captureSession else {
+            showAlertPopup(title: "Cannot Find Camera", message: "There seems to be a problem with the camera on your device.")
+            return
+        }
+        
         let cameraPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         cameraPreviewLayer.videoGravity = .resizeAspectFill
         cameraPreviewLayer.connection?.videoOrientation = .portrait
-        DispatchQueue.main.async {[weak self] in
-            guard let self else {return}
-            
-            cameraPreviewLayer.frame = self.view.frame
-            self.view.layer.insertSublayer(cameraPreviewLayer, at: 0)
-        }
+        cameraPreviewLayer.frame = self.view.frame
+        self.view.layer.insertSublayer(cameraPreviewLayer, at: 0)
               
         DispatchQueue.main.async {
             //Adds the camera guide view
