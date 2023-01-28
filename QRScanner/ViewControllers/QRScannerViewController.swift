@@ -13,16 +13,14 @@ import CoreImage
 
 class QRScannerViewController: UIViewController {
     
+    private let viewModel = QRScannerViewModel()
+    
     private var captureSession: AVCaptureSession?
     private var cameraPreviewLayer: AVCaptureVideoPreviewLayer?
     
     private var viewGuide: PartialTransparentView = PartialTransparentView(frame: .zero)
     private var label: UILabel = UILabel(frame: .zero)
     
-    private var height: CGFloat = 0
-    private var width: CGFloat = 0
-    private var viewX: CGFloat = 0
-    private var viewY: CGFloat = 0
     private var labelYCenterConstraintConstant: CGFloat = 0
     
     override func viewDidLoad() {
@@ -49,9 +47,9 @@ class QRScannerViewController: UIViewController {
         coordinator.animate(alongsideTransition: nil, completion: { [weak self] (context) in
             guard let self else {return}
             
-            DispatchQueue.main.async(execute: {
+            DispatchQueue.main.async  {
                 self.updateVideoOrientation()
-            })
+            }
         })
     }
 }
@@ -143,27 +141,27 @@ extension QRScannerViewController {
     }
 
     private func setupGuideViewPotrait() {
-        width = UIScreen.main.bounds.width - (UIScreen.main.bounds.width * 0.2)
-        height = width
-        viewX = (UIScreen.main.bounds.width / 2) - (width / 2)
-        viewY = (UIScreen.main.bounds.height / 2) - (height / 2)
+        viewModel.getWidth = UIScreen.main.bounds.width - (UIScreen.main.bounds.width * 0.2)
+        viewModel.getHeight = viewModel.getWidth
+        viewModel.getViewX = (UIScreen.main.bounds.width / 2) - (viewModel.getWidth / 2)
+        viewModel.getViewY = (UIScreen.main.bounds.height / 2) - (viewModel.getHeight / 2)
         
         setupPartialTransparentView()
         setupUILabelGuide()
     }
     
     private func setupGuideViewLandscape() {
-        width = UIScreen.main.bounds.width - (UIScreen.main.bounds.width * 0.6)
-        height = UIScreen.main.bounds.height - (UIScreen.main.bounds.height * 0.4)
-        viewX = (UIScreen.main.bounds.width / 2) - (width / 2)
-        viewY = (UIScreen.main.bounds.height / 2) - (height / 2)
+        viewModel.getWidth = UIScreen.main.bounds.width - (UIScreen.main.bounds.width * 0.6)
+        viewModel.getHeight = UIScreen.main.bounds.height - (UIScreen.main.bounds.height * 0.4)
+        viewModel.getViewX = (UIScreen.main.bounds.width / 2) - (viewModel.getWidth / 2)
+        viewModel.getViewY = (UIScreen.main.bounds.height / 2) - (viewModel.getHeight / 2)
         
         setupPartialTransparentView()
         setupUILabelGuide()
     }
     
     private func setupPartialTransparentView() {
-        viewGuide = PartialTransparentView(rectsArray: [CGRect(x: viewX, y: viewY, width: width, height: height)])
+        viewGuide = PartialTransparentView(rectsArray: [CGRect(x: viewModel.getViewX, y: viewModel.getViewY, width: viewModel.getWidth, height: viewModel.getHeight)])
         view.addSubview(viewGuide)
         
         viewGuide.translatesAutoresizingMaskIntoConstraints = false
