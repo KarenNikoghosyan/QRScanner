@@ -20,9 +20,7 @@ class QRScannerViewController: UIViewController {
     
     private var viewGuide: PartialTransparentView = PartialTransparentView(frame: .zero)
     private var label: UILabel = UILabel(frame: .zero)
-    
-    private var labelYCenterConstraintConstant: CGFloat = 0
-    
+        
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -183,9 +181,9 @@ extension QRScannerViewController {
         
         label.translatesAutoresizingMaskIntoConstraints = false
         
-        labelYCenterConstraintConstant = UIDevice.current.orientation == .portrait ? -200 : UIDevice.current.orientation == .landscapeLeft ? -150 : UIDevice.current.orientation == .landscapeRight ? -150 : -200
+        viewModel.getLabelYCenterConstraintConstant = UIDevice.current.orientation == .portrait ? -200 : UIDevice.current.orientation == .landscapeLeft ? -150 : UIDevice.current.orientation == .landscapeRight ? -150 : -200
         NSLayoutConstraint.activate([
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: labelYCenterConstraintConstant),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: viewModel.getLabelYCenterConstraintConstant),
             label.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 0)
         ])
         view.bringSubviewToFront(label)

@@ -15,11 +15,12 @@ class QRScannerViewModel {
     private var viewY: CGFloat = 0
     private var labelYCenterConstraintConstant: CGFloat = 0
     
+    //MARK: - Getters
     var getHeight: CGFloat {
         get { return height }
         set { height = newValue }
     }
-    
+
     var getWidth: CGFloat {
         get { return width }
         set { width = newValue }
